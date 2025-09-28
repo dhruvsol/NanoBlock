@@ -5,6 +5,7 @@ edition.workspace = true
 
 [dependencies]
 firewall-common = { path = "../firewall-common" }
+nano-block = { path = "../../.." }
 
 aya-ebpf = { workspace = true }
 aya-log-ebpf = { workspace = true }

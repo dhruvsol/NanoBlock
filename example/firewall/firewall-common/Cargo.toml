@@ -11,6 +11,7 @@ user = ["aya"]
 
 [dependencies]
 aya = { workspace = true, optional = true }
+nano-block = { path = "../../..", optional = true }
 
 [lib]
 path = "src/lib.rs"
