@@ -1,0 +1,17 @@
+[package]
+name = "nano-block"
+version = "0.1.0"
+edition = "2021"
+description = "High-performance eBPF-based firewall with a user-friendly API"
+authors = ["Your Name <your.email@example.com>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/yourusername/nanoblock"
+keywords = ["firewall", "ebpf", "networking", "security"]
+categories = ["network-programming", "os::linux-apis"]
+
+[dependencies]
+tokio = { workspace = true}
+thiserror = {workspace = true}
+aya = { workspace = true }
+aya-log = { workspace = true }
+nano-block-ebpf = { path = "../nano-block-ebpf" }

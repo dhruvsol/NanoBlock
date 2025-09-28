@@ -1,0 +1,12 @@
+[package]
+name = "nano-block-ebpf"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+aya = { workspace = true}
+aya-build = { workspace = true}
+aya-ebpf = { workspace = true}
+aya-log = { workspace = true}
+aya-log-ebpf = { workspace = true}
+network-types = { workspace = true}

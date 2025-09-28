@@ -3,7 +3,7 @@
 
 use aya_ebpf::{bindings::xdp_action, macros::xdp, programs::XdpContext};
 use aya_log_ebpf::info;
-use nano_block::check_packet;
+use nano_block_ebpf::check_packet;
 
 #[xdp]
 pub fn firewall(ctx: XdpContext) -> u32 {
@@ -16,7 +16,7 @@ pub fn firewall(ctx: XdpContext) -> u32 {
 fn try_firewall(ctx: XdpContext) -> Result<u32, u32> {
     info!(&ctx, "received a packet");
 
-    // Use the nano-block library to check the packet
+    // Use the nano-block-ebpf library to check the packet
     match check_packet(ctx) {
         Ok(action) => match action {
             xdp_action::XDP_PASS => {

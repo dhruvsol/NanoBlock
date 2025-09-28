@@ -2,10 +2,9 @@
 resolver = "2"
 members = [
     "firewall",
-    "firewall-common",
     "firewall-ebpf",
 ]
-default-members = ["firewall", "firewall-common"]
+default-members = ["firewall"]
 
 [workspace.package]
 license = "MIT OR Apache-2.0"
@@ -17,6 +16,7 @@ aya-build = { git = "https://github.com/aya-rs/aya", default-features = false }
 aya-ebpf = { git = "https://github.com/aya-rs/aya", default-features = false }
 aya-log = { git = "https://github.com/aya-rs/aya", default-features = false }
 aya-log-ebpf = { git = "https://github.com/aya-rs/aya", default-features = false }
+network-types = { git = "https://github.com/aya-rs/aya", default-features = false }
 
 anyhow = { version = "1", default-features = false }
 # `std` feature is currently required to build `clap`.
@@ -28,7 +28,9 @@ libc = { version = "0.2.159", default-features = false }
 log = { version = "0.4.22", default-features = false }
 tokio = { version = "1.40.0", default-features = false }
 which = { version = "6.0.0", default-features = false }
-nano_block = {path = "../nano-block}
+thiserror = { version = "1.0", default-features = false }
+nano-block = { path = "../../nano-block" }
+nano-block-ebpf = { path = "../../nano-block-ebpf" }
 [profile.release.package.firewall-ebpf]
 debug = 2
 codegen-units = 1

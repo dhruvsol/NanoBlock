@@ -1,66 +1,21 @@
 #![no_std]
 #![no_main]
 
+pub mod utils;
+
+use crate::utils::{
+    allowed_ip_v4_config, allowed_ip_v6, allowed_ip_v6_config, allowed_port, allowed_v4_ip,
+    blocked_ip_v4, blocked_ip_v4_config, blocked_ip_v6, blocked_ip_v6_config, ipv6_to_u128, ptr_at,
+    read_u32,
+};
 use aya_ebpf::{
     bindings::xdp_action::{XDP_DROP, XDP_PASS},
-    macros::map,
-    maps::HashMap,
     programs::XdpContext,
 };
-use core::mem;
 use network_types::{
     eth::EthHdr,
     ip::{Ipv4Hdr, Ipv6Hdr},
 };
-
-#[derive(Default)]
-#[repr(C)]
-pub struct IpConfig {
-    pub port: u16,
-    pub protocol: u8,
-}
-
-#[map]
-static ALLOWED_PORTS: HashMap<u32, u32> = HashMap::<u32, u32>::with_max_entries(1024, 0); // allow ports for everyone without no ip block
-#[map]
-static ALLOWED_IPS: HashMap<u32, u32> = HashMap::<u32, u32>::with_max_entries(1024, 0); // allowed ips for everyone without no port block
-
-#[map]
-static ALLOWED_IP_CONFIG: HashMap<u32, IpConfig> =
-    HashMap::<u32, IpConfig>::with_max_entries(1024, 0); // check ip against configuration
-
-pub fn read_u32(data: [u8; 4]) -> Result<u32, ()> {
-    Ok(u32::from_be_bytes(data))
-}
-pub fn read_u16(data: [u8; 2]) -> Result<u16, ()> {
-    Ok(u16::from_be_bytes(data))
-}
-fn allowed_ip(address: u32) -> bool {
-    unsafe { ALLOWED_IPS.get(&address).is_some() }
-}
-fn allowed_port(port: u32) -> bool {
-    unsafe { ALLOWED_PORTS.get(&port).is_some() }
-}
-
-fn allowed_ip_config(address: u32, port: u16, protocol: u8) -> bool {
-    if let Some(config) = unsafe { ALLOWED_IP_CONFIG.get(&address) } {
-        return config.port == port && config.protocol == protocol && config.allowed;
-    }
-    false
-}
-
-#[inline(always)]
-fn ptr_at<T>(ctx: &XdpContext, offset: usize) -> Result<*const T, ()> {
-    let start = ctx.data();
-    let end = ctx.data_end();
-    let len = mem::size_of::<T>();
-
-    if start + offset + len > end {
-        return Err(());
-    }
-
-    Ok((start + offset) as *const T)
-}
 
 fn check_ipv4_packet(ctx: &XdpContext, src_ip: u32) -> Result<u32, ()> {
     // Parse IPv4 header
@@ -82,19 +37,27 @@ fn check_ipv4_packet(ctx: &XdpContext, src_ip: u32) -> Result<u32, ()> {
     } else {
         return Ok(XDP_PASS); // Non-TCP/UDP, let it pass
     };
-    // Check if port is allowed to accept everything
 
+    // Check if IP is blocked
+    if blocked_ip_v4(src_ip) {
+        return Ok(XDP_DROP);
+    }
+    // Check if port is allowed to accept everything
+    if blocked_ip_v4_config(src_ip, dest_port, protocol as u8) {
+        return Ok(XDP_DROP);
+    }
+    // if port is allowed to accept everything
     if allowed_port(dest_port as u32) {
         return Ok(XDP_PASS);
     }
 
     //  Check if IP is in the allowed list
-    if allowed_ip(src_ip) {
+    if allowed_v4_ip(src_ip) {
         return Ok(XDP_PASS);
     }
 
     //  Check if IP is in ALLOWED_IP_CONFIG and match other configs
-    if allowed_ip_config(src_ip, dest_port, protocol as u8) {
+    if allowed_ip_v4_config(src_ip, dest_port, protocol as u8) {
         return Ok(XDP_PASS);
     }
 
@@ -121,20 +84,28 @@ fn check_ipv6_packet(ctx: &XdpContext, src_ip: [u8; 16]) -> Result<u32, ()> {
         return Ok(XDP_PASS); // Non-TCP/UDP, let it pass
     };
 
-    let src_ip_key = u32::from_be_bytes([src_ip[0], src_ip[1], src_ip[2], src_ip[3]]);
+    let src_ip_key = ipv6_to_u128(src_ip);
 
+    // Check if IP is blocked
+    if blocked_ip_v6(src_ip_key) {
+        return Ok(XDP_DROP);
+    }
+
+    if blocked_ip_v6_config(src_ip_key, dest_port, next_header as u8) {
+        return Ok(XDP_DROP);
+    }
     //  Check if port is allowed to accept everything
     if allowed_port(dest_port as u32) {
         return Ok(XDP_PASS);
     }
 
     //Check if IP is in the allowed list
-    if allowed_ip(src_ip_key) {
+    if allowed_ip_v6(src_ip_key) {
         return Ok(XDP_PASS);
     }
 
     // Check if IP is in ALLOWED_IP_CONFIG and match other configs
-    if allowed_ip_config(src_ip_key, dest_port, next_header as u8) {
+    if allowed_ip_v6_config(src_ip_key, dest_port, next_header as u8) {
         return Ok(XDP_PASS);
     }
 
