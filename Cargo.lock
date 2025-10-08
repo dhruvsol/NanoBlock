@@ -101,6 +101,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "aya-log-ebpf"
+version = "0.1.1"
+source = "git+https://github.com/aya-rs/aya#98e8c78376286bbdc8c7ee3f0292b878cec24b99"
+dependencies = [
+ "aya-ebpf",
+ "aya-log-common",
+ "aya-log-ebpf-macros",
+]
+
+[[package]]
+name = "aya-log-ebpf-macros"
+version = "0.1.0"
+source = "git+https://github.com/aya-rs/aya#98e8c78376286bbdc8c7ee3f0292b878cec24b99"
+dependencies = [
+ "aya-log-common",
+ "aya-log-parser",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "aya-log-parser"
+version = "0.1.13"
+source = "git+https://github.com/aya-rs/aya#98e8c78376286bbdc8c7ee3f0292b878cec24b99"
+dependencies = [
+ "aya-log-common",
+]
+
+[[package]]
 name = "aya-obj"
 version = "0.2.1"
 source = "git+https://github.com/aya-rs/aya#98e8c78376286bbdc8c7ee3f0292b878cec24b99"
@@ -290,6 +320,7 @@ name = "nano-block-ebpf"
 version = "0.1.0"
 dependencies = [
  "aya-ebpf",
+ "aya-log-ebpf",
  "network-types",
 ]
 

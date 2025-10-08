@@ -87,7 +87,7 @@ pub struct FirewallManager {
 }
 
 impl FirewallManager {
-    pub fn new(mut ebpf: aya::Ebpf) -> FirewallResult<Self> {
+    pub fn new(ebpf: &mut aya::Ebpf) -> FirewallResult<Self> {
         let allowed_ports: HashMap<_, u32, u32> = HashMap::try_from(
             ebpf.take_map("ALLOWED_PORTS")
                 .ok_or_else(|| FirewallError::MapNotFound("ALLOWED_PORTS".to_string()))?,
