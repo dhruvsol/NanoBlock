@@ -281,7 +281,6 @@ version = "0.1.0"
 dependencies = [
  "aya",
  "aya-log",
- "nano-block-ebpf",
  "thiserror 1.0.69",
  "tokio",
 ]

@@ -10,49 +10,20 @@ pub enum Protocol {
     Udp = 17,
 }
 
+unsafe impl Pod for Protocol {}
 impl Protocol {
     pub fn as_u8(self) -> u8 {
         self as u8
     }
 }
 
+#[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct IpPortConfig {
     pub port: u16,
     pub protocol: Protocol,
 }
-
-// Implement Pod trait for aya eBPF compatibility
 unsafe impl Pod for IpPortConfig {}
-impl TryFrom<nano_block_ebpf::utils::IpConfig> for IpPortConfig {
-    type Error = std::io::Error;
-
-    fn try_from(value: nano_block_ebpf::utils::IpConfig) -> std::result::Result<Self, Self::Error> {
-        let protocol = match value.protocol {
-            6 => Protocol::Tcp,
-            17 => Protocol::Udp,
-            _ => {
-                return Err(std::io::Error::new(
-                    std::io::ErrorKind::InvalidData,
-                    format!("Invalid protocol: {}", value.protocol),
-                ))
-            }
-        };
-        Ok(Self {
-            port: value.port,
-            protocol,
-        })
-    }
-}
-
-impl From<IpPortConfig> for nano_block_ebpf::utils::IpConfig {
-    fn from(value: IpPortConfig) -> Self {
-        Self {
-            port: value.port,
-            protocol: value.protocol.as_u8(),
-        }
-    }
-}
 
 impl IpPortConfig {
     pub fn new(port: u16, protocol: Protocol) -> Self {

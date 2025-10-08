@@ -14,4 +14,3 @@ tokio = { workspace = true}
 thiserror = {workspace = true}
 aya = { workspace = true }
 aya-log = { workspace = true }
-nano-block-ebpf = { path = "../nano-block-ebpf" }
