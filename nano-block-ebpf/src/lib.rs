@@ -195,8 +195,7 @@ pub fn check_packet(ctx: &XdpContext) -> u32 {
     let ethhdr = unsafe { &*ethhdr_ptr };
 
     debug!(&ctx, "EtherType: {}", ethhdr.ether_type);
-
-    match ethhdr.ether_type {
+    match u16::from_be(ethhdr.ether_type) {
         0x0800_u16 => {
             debug!(&ctx, "IPv4 packet detected");
             let iphdr_ptr: *const Ipv4Hdr = match ptr_at(&ctx, EthHdr::LEN) {
