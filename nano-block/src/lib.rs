@@ -110,20 +110,20 @@ impl FirewallManager {
         )?;
 
         let allowed_v4_configs: HashMap<_, u32, IpPortConfig> = HashMap::try_from(
-            ebpf.take_map("ALLOWED_V4_CONFIG")
-                .ok_or_else(|| FirewallError::MapNotFound("ALLOWED_V4_CONFIG".to_string()))?,
+            ebpf.take_map("ALLOWED_IP_V4_CONFIG")
+                .ok_or_else(|| FirewallError::MapNotFound("ALLOWED_IP_V4_CONFIG".to_string()))?,
         )?;
         let allowed_v6_configs: HashMap<_, u128, IpPortConfig> = HashMap::try_from(
-            ebpf.take_map("ALLOWED_V6_CONFIG")
-                .ok_or_else(|| FirewallError::MapNotFound("ALLOWED_V6_CONFIG".to_string()))?,
+            ebpf.take_map("ALLOWED_IP_V6_CONFIG")
+                .ok_or_else(|| FirewallError::MapNotFound("ALLOWED_IP_V6_CONFIG".to_string()))?,
         )?;
         let blocked_v4_configs: HashMap<_, u32, IpPortConfig> = HashMap::try_from(
-            ebpf.take_map("BLOCKED_V4_CONFIG")
-                .ok_or_else(|| FirewallError::MapNotFound("BLOCKED_V4_CONFIG".to_string()))?,
+            ebpf.take_map("BLOCKED_IP_V4_CONFIG")
+                .ok_or_else(|| FirewallError::MapNotFound("BLOCKED_IP_V4_CONFIG".to_string()))?,
         )?;
         let blocked_v6_configs: HashMap<_, u128, IpPortConfig> = HashMap::try_from(
-            ebpf.take_map("BLOCKED_V6_CONFIG")
-                .ok_or_else(|| FirewallError::MapNotFound("BLOCKED_V6_CONFIG".to_string()))?,
+            ebpf.take_map("BLOCKED_IP_V6_CONFIG")
+                .ok_or_else(|| FirewallError::MapNotFound("BLOCKED_IP_V6_CONFIG".to_string()))?,
         )?;
         Ok(Self {
             allowed_ports: Arc::new(RwLock::new(allowed_ports)),
