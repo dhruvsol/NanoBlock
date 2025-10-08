@@ -15,7 +15,7 @@ pub static ALLOWED_PORTS: HashMap<u32, u32> = HashMap::<u32, u32>::with_max_entr
 
 // Allow ips for everyone without no port block
 #[map]
-pub static ALLOWED_V4_IPS: HashMap<u32, u32> = HashMap::<u32, u32>::with_max_entries(1024, 0); // allowed ips for everyone without no port block
+pub static ALLOWED_IP_V4: HashMap<u32, u32> = HashMap::<u32, u32>::with_max_entries(1024, 0); // allowed ips for everyone without no port block
 // Allow ips for everyone with port and protocol limits
 #[map]
 pub static ALLOWED_IP_V4_CONFIG: HashMap<u32, IpConfig> =
@@ -34,7 +34,7 @@ pub static BLOCKED_IP_V4: HashMap<u32, u32> = HashMap::<u32, u32>::with_max_entr
 pub static BLOCKED_IP_V6: HashMap<u128, u32> = HashMap::<u128, u32>::with_max_entries(1024, 0);
 // Allow ips for everyone without no port block
 #[map]
-pub static ALLOWED_V6_IPS: HashMap<u128, u32> = HashMap::<u128, u32>::with_max_entries(1024, 0); // allowed ips for everyone without no port block
+pub static ALLOWED_IP_V6: HashMap<u128, u32> = HashMap::<u128, u32>::with_max_entries(1024, 0); // allowed ips for everyone without no port block
 
 // Allow ips for everyone with port and protocol limits
 #[map]
@@ -53,7 +53,7 @@ pub fn allowed_port(port: u32) -> bool {
 
 #[inline(always)]
 pub fn allowed_v4_ip(address: u32) -> bool {
-    unsafe { ALLOWED_V4_IPS.get(&address).is_some() }
+    unsafe { ALLOWED_IP_V4.get(&address).is_some() }
 }
 #[inline(always)]
 pub fn blocked_ip_v4(address: u32) -> bool {
@@ -77,7 +77,7 @@ pub fn allowed_ip_v4_config(address: u32, port: u16, protocol: u8) -> bool {
 
 #[inline(always)]
 pub fn allowed_ip_v6(address: u128) -> bool {
-    unsafe { ALLOWED_V6_IPS.get(&address).is_some() }
+    unsafe { ALLOWED_IP_V6.get(&address).is_some() }
 }
 
 #[inline(always)]

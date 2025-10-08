@@ -93,37 +93,37 @@ impl FirewallManager {
                 .ok_or_else(|| FirewallError::MapNotFound("ALLOWED_PORTS".to_string()))?,
         )?;
         let allowed_v4_ips: HashMap<_, u32, u32> = HashMap::try_from(
-            ebpf.take_map("ALLOWED_V4_IPS")
-                .ok_or_else(|| FirewallError::MapNotFound("ALLOWED_V4_IPS".to_string()))?,
+            ebpf.take_map("ALLOWED_IP_V4")
+                .ok_or_else(|| FirewallError::MapNotFound("ALLOWED_IP_V4".to_string()))?,
         )?;
         let allowed_v6_ips: HashMap<_, u128, u32> = HashMap::try_from(
-            ebpf.take_map("ALLOWED_V6_IPS")
-                .ok_or_else(|| FirewallError::MapNotFound("ALLOWED_V6_IPS".to_string()))?,
+            ebpf.take_map("ALLOWED_IP_V6")
+                .ok_or_else(|| FirewallError::MapNotFound("ALLOWED_IP_V6".to_string()))?,
         )?;
         let blocked_v4_ips: HashMap<_, u32, u32> = HashMap::try_from(
-            ebpf.take_map("BLOCKED_V4_IPS")
-                .ok_or_else(|| FirewallError::MapNotFound("BLOCKED_V4_IPS".to_string()))?,
+            ebpf.take_map("BLOCKED_IP_V4")
+                .ok_or_else(|| FirewallError::MapNotFound("BLOCKED_IP_V4".to_string()))?,
         )?;
         let blocked_v6_ips: HashMap<_, u128, u32> = HashMap::try_from(
-            ebpf.take_map("BLOCKED_V6_IPS")
-                .ok_or_else(|| FirewallError::MapNotFound("BLOCKED_V6_IPS".to_string()))?,
+            ebpf.take_map("BLOCKED_IP_V6")
+                .ok_or_else(|| FirewallError::MapNotFound("BLOCKED_IP_V6".to_string()))?,
         )?;
 
         let allowed_v4_configs: HashMap<_, u32, IpPortConfig> = HashMap::try_from(
-            ebpf.take_map("ALLOWED_V4_CONFIGS")
-                .ok_or_else(|| FirewallError::MapNotFound("ALLOWED_V4_CONFIGS".to_string()))?,
+            ebpf.take_map("ALLOWED_V4_CONFIG")
+                .ok_or_else(|| FirewallError::MapNotFound("ALLOWED_V4_CONFIG".to_string()))?,
         )?;
         let allowed_v6_configs: HashMap<_, u128, IpPortConfig> = HashMap::try_from(
-            ebpf.take_map("ALLOWED_V6_CONFIGS")
-                .ok_or_else(|| FirewallError::MapNotFound("ALLOWED_V6_CONFIGS".to_string()))?,
+            ebpf.take_map("ALLOWED_V6_CONFIG")
+                .ok_or_else(|| FirewallError::MapNotFound("ALLOWED_V6_CONFIG".to_string()))?,
         )?;
         let blocked_v4_configs: HashMap<_, u32, IpPortConfig> = HashMap::try_from(
-            ebpf.take_map("BLOCKED_V4_CONFIGS")
-                .ok_or_else(|| FirewallError::MapNotFound("BLOCKED_V4_CONFIGS".to_string()))?,
+            ebpf.take_map("BLOCKED_V4_CONFIG")
+                .ok_or_else(|| FirewallError::MapNotFound("BLOCKED_V4_CONFIG".to_string()))?,
         )?;
         let blocked_v6_configs: HashMap<_, u128, IpPortConfig> = HashMap::try_from(
-            ebpf.take_map("BLOCKED_V6_CONFIGS")
-                .ok_or_else(|| FirewallError::MapNotFound("BLOCKED_V6_CONFIGS".to_string()))?,
+            ebpf.take_map("BLOCKED_V6_CONFIG")
+                .ok_or_else(|| FirewallError::MapNotFound("BLOCKED_V6_CONFIG".to_string()))?,
         )?;
         Ok(Self {
             allowed_ports: Arc::new(RwLock::new(allowed_ports)),
@@ -138,245 +138,6 @@ impl FirewallManager {
         })
     }
 
-    pub async fn list_rules(&self) -> FirewallResult<Vec<String>> {
-        let mut rules = vec![];
-
-        // List allowed ports
-        rules.push("=== ALLOWED PORTS ===".to_string());
-        let allowed_ports = self.allowed_ports.read().await;
-        let mut port_count = 0;
-        for result in allowed_ports.iter() {
-            match result {
-                Ok((port, _)) => {
-                    rules.push(format!("  Port: {}", port));
-                    port_count += 1;
-                }
-                Err(_) => {}
-            }
-        }
-        if port_count == 0 {
-            rules.push("  (No allowed ports configured)".to_string());
-        }
-
-        // List allowed IPv4 IPs
-        rules.push("\n=== ALLOWED IPv4 ADDRESSES ===".to_string());
-        let allowed_v4_ips = self.allowed_v4_ips.read().await;
-        let mut v4_count = 0;
-        for result in allowed_v4_ips.iter() {
-            match result {
-                Ok((ip_u32, _)) => {
-                    let ip_bytes = ip_u32.to_be_bytes();
-                    let ip = format!(
-                        "{}.{}.{}.{}",
-                        ip_bytes[0], ip_bytes[1], ip_bytes[2], ip_bytes[3]
-                    );
-                    rules.push(format!("  IP: {}", ip));
-                    v4_count += 1;
-                }
-                Err(_e) => {}
-            }
-        }
-        if v4_count == 0 {
-            rules.push("  (No allowed IPv4 addresses configured)".to_string());
-        }
-
-        // List allowed IPv6 IPs
-        rules.push("\n=== ALLOWED IPv6 ADDRESSES ===".to_string());
-        let allowed_v6_ips = self.allowed_v6_ips.read().await;
-        let mut v6_count = 0;
-        for result in allowed_v6_ips.iter() {
-            match result {
-                Ok((ip_u128, _)) => {
-                    let ip_bytes = ip_u128.to_be_bytes();
-                    let ip = format!(
-                        "{:02x}{:02x}:{:02x}{:02x}:{:02x}{:02x}:{:02x}{:02x}:{:02x}{:02x}:{:02x}{:02x}:{:02x}{:02x}:{:02x}{:02x}",
-                        ip_bytes[0], ip_bytes[1], ip_bytes[2], ip_bytes[3],
-                        ip_bytes[4], ip_bytes[5], ip_bytes[6], ip_bytes[7],
-                        ip_bytes[8], ip_bytes[9], ip_bytes[10], ip_bytes[11],
-                        ip_bytes[12], ip_bytes[13], ip_bytes[14], ip_bytes[15]
-                    );
-                    rules.push(format!("  IP: {}", ip));
-                    v6_count += 1;
-                }
-                Err(_e) => {}
-            }
-        }
-        if v6_count == 0 {
-            rules.push("  (No allowed IPv6 addresses configured)".to_string());
-        }
-
-        // List blocked IPv4 IPs
-        rules.push("\n=== BLOCKED IPv4 ADDRESSES ===".to_string());
-        let blocked_v4_ips = self.blocked_v4_ips.read().await;
-        let mut blocked_v4_count = 0;
-        for result in blocked_v4_ips.iter() {
-            match result {
-                Ok((ip_u32, _)) => {
-                    let ip_bytes = ip_u32.to_be_bytes();
-                    let ip = format!(
-                        "{}.{}.{}.{}",
-                        ip_bytes[0], ip_bytes[1], ip_bytes[2], ip_bytes[3]
-                    );
-                    rules.push(format!("  IP: {}", ip));
-                    blocked_v4_count += 1;
-                }
-                Err(_e) => {}
-            }
-        }
-        if blocked_v4_count == 0 {
-            rules.push("  (No blocked IPv4 addresses configured)".to_string());
-        }
-
-        // List blocked IPv6 IPs
-        rules.push("\n=== BLOCKED IPv6 ADDRESSES ===".to_string());
-        let blocked_v6_ips = self.blocked_v6_ips.read().await;
-        let mut blocked_v6_count = 0;
-        for result in blocked_v6_ips.iter() {
-            match result {
-                Ok((ip_u128, _)) => {
-                    let ip_bytes = ip_u128.to_be_bytes();
-                    let ip = format!(
-                        "{:02x}{:02x}:{:02x}{:02x}:{:02x}{:02x}:{:02x}{:02x}:{:02x}{:02x}:{:02x}{:02x}:{:02x}{:02x}:{:02x}{:02x}",
-                        ip_bytes[0], ip_bytes[1], ip_bytes[2], ip_bytes[3],
-                        ip_bytes[4], ip_bytes[5], ip_bytes[6], ip_bytes[7],
-                        ip_bytes[8], ip_bytes[9], ip_bytes[10], ip_bytes[11],
-                        ip_bytes[12], ip_bytes[13], ip_bytes[14], ip_bytes[15]
-                    );
-                    rules.push(format!("  IP: {}", ip));
-                    blocked_v6_count += 1;
-                }
-                Err(_e) => {}
-            }
-        }
-        if blocked_v6_count == 0 {
-            rules.push("  (No blocked IPv6 addresses configured)".to_string());
-        }
-
-        // List allowed IPv4 configurations
-        rules.push("\n=== ALLOWED IPv4 CONFIGURATIONS ===".to_string());
-        let allowed_v4_configs = self.allowed_v4_configs.read().await;
-        let mut v4_config_count = 0;
-        for result in allowed_v4_configs.iter() {
-            match result {
-                Ok((ip_u32, config)) => {
-                    let ip_bytes = ip_u32.to_be_bytes();
-                    let ip = format!(
-                        "{}.{}.{}.{}",
-                        ip_bytes[0], ip_bytes[1], ip_bytes[2], ip_bytes[3]
-                    );
-                    let protocol = match config.protocol {
-                        Protocol::Tcp => "TCP",
-                        Protocol::Udp => "UDP",
-                    };
-                    rules.push(format!(
-                        "  IP: {} | Port: {} | Protocol: {} | Action: ALLOW",
-                        ip, config.port, protocol
-                    ));
-                    v4_config_count += 1;
-                }
-                Err(_e) => {}
-            }
-        }
-        if v4_config_count == 0 {
-            rules.push("  (No allowed IPv4 configurations configured)".to_string());
-        }
-
-        // List allowed IPv6 configurations
-        rules.push("\n=== ALLOWED IPv6 CONFIGURATIONS ===".to_string());
-        let allowed_v6_configs = self.allowed_v6_configs.read().await;
-        let mut v6_config_count = 0;
-        for result in allowed_v6_configs.iter() {
-            match result {
-                Ok((ip_u128, config)) => {
-                    let ip_bytes = ip_u128.to_be_bytes();
-                    let ip = format!(
-                        "{:02x}{:02x}:{:02x}{:02x}:{:02x}{:02x}:{:02x}{:02x}:{:02x}{:02x}:{:02x}{:02x}:{:02x}{:02x}:{:02x}{:02x}",
-                        ip_bytes[0], ip_bytes[1], ip_bytes[2], ip_bytes[3],
-                        ip_bytes[4], ip_bytes[5], ip_bytes[6], ip_bytes[7],
-                        ip_bytes[8], ip_bytes[9], ip_bytes[10], ip_bytes[11],
-                        ip_bytes[12], ip_bytes[13], ip_bytes[14], ip_bytes[15]
-                    );
-                    let protocol = match config.protocol {
-                        Protocol::Tcp => "TCP",
-                        Protocol::Udp => "UDP",
-                    };
-                    rules.push(format!(
-                        "  IP: {} | Port: {} | Protocol: {} | Action: ALLOW",
-                        ip, config.port, protocol
-                    ));
-                    v6_config_count += 1;
-                }
-                Err(_e) => {}
-            }
-        }
-        if v6_config_count == 0 {
-            rules.push("  (No allowed IPv6 configurations configured)".to_string());
-        }
-
-        // List blocked IPv4 configurations
-        rules.push("\n=== BLOCKED IPv4 CONFIGURATIONS ===".to_string());
-        let blocked_v4_configs = self.blocked_v4_configs.read().await;
-        let mut blocked_v4_config_count = 0;
-        for result in blocked_v4_configs.iter() {
-            match result {
-                Ok((ip_u32, config)) => {
-                    let ip_bytes = ip_u32.to_be_bytes();
-                    let ip = format!(
-                        "{}.{}.{}.{}",
-                        ip_bytes[0], ip_bytes[1], ip_bytes[2], ip_bytes[3]
-                    );
-                    let protocol = match config.protocol {
-                        Protocol::Tcp => "TCP",
-                        Protocol::Udp => "UDP",
-                    };
-                    rules.push(format!(
-                        "  IP: {} | Port: {} | Protocol: {} | Action: BLOCK",
-                        ip, config.port, protocol
-                    ));
-                    blocked_v4_config_count += 1;
-                }
-                Err(_e) => {}
-            }
-        }
-        if blocked_v4_config_count == 0 {
-            rules.push("  (No blocked IPv4 configurations configured)".to_string());
-        }
-
-        // List blocked IPv6 configurations
-        rules.push("\n=== BLOCKED IPv6 CONFIGURATIONS ===".to_string());
-        let blocked_v6_configs = self.blocked_v6_configs.read().await;
-        let mut blocked_v6_config_count = 0;
-        for result in blocked_v6_configs.iter() {
-            match result {
-                Ok((ip_u128, config)) => {
-                    let ip_bytes = ip_u128.to_be_bytes();
-                    let ip = format!(
-                        "{:02x}{:02x}:{:02x}{:02x}:{:02x}{:02x}:{:02x}{:02x}:{:02x}{:02x}:{:02x}{:02x}:{:02x}{:02x}:{:02x}{:02x}",
-                        ip_bytes[0], ip_bytes[1], ip_bytes[2], ip_bytes[3],
-                        ip_bytes[4], ip_bytes[5], ip_bytes[6], ip_bytes[7],
-                        ip_bytes[8], ip_bytes[9], ip_bytes[10], ip_bytes[11],
-                        ip_bytes[12], ip_bytes[13], ip_bytes[14], ip_bytes[15]
-                    );
-                    let protocol = match config.protocol {
-                        Protocol::Tcp => "TCP",
-                        Protocol::Udp => "UDP",
-                    };
-                    rules.push(format!(
-                        "  IP: {} | Port: {} | Protocol: {} | Action: BLOCK",
-                        ip, config.port, protocol
-                    ));
-                    blocked_v6_config_count += 1;
-                }
-                Err(_e) => {}
-            }
-        }
-        if blocked_v6_config_count == 0 {
-            rules.push("  (No blocked IPv6 configurations configured)".to_string());
-        }
-
-        Ok(rules)
-    }
-
     pub async fn allow_port(&mut self, port: u16) -> FirewallResult<()> {
         if port == 0 {
             return Err(FirewallError::InvalidPort(port));
@@ -386,19 +147,6 @@ impl FirewallManager {
         let mut allowed_ports = self.allowed_ports.write().await;
         allowed_ports.insert(port as u32, 1, 0).map_err(|e| {
             FirewallError::MapOperation(format!("Failed to insert port {}: {}", port, e))
-        })?;
-
-        Ok(())
-    }
-
-    pub async fn block_port(&mut self, port: u16) -> FirewallResult<()> {
-        if port == 0 {
-            return Err(FirewallError::InvalidPort(port));
-        }
-
-        let mut allowed_ports = self.allowed_ports.write().await;
-        allowed_ports.remove(&(port as u32)).map_err(|e| {
-            FirewallError::MapOperation(format!("Failed to remove port {}: {}", port, e))
         })?;
 
         Ok(())
