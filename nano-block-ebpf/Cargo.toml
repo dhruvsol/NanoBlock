@@ -4,6 +4,5 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-aya = { workspace = true}
 aya-ebpf = { workspace = true}
 network-types = { workspace = true}
