@@ -11,7 +11,7 @@ use aya_ebpf::{
     bindings::xdp_action::{XDP_DROP, XDP_PASS},
     programs::XdpContext,
 };
-use aya_log_ebpf::debug;
+use aya_log_ebpf::{debug, info};
 use network_types::{
     eth::EthHdr,
     ip::{Ipv4Hdr, Ipv6Hdr},
@@ -54,13 +54,13 @@ fn check_ipv4_packet(ctx: &XdpContext, src_ip: u32) -> Result<u32, ()> {
 
     // Check if IP is blocked
     if blocked_ip_v4(src_ip) {
-        debug!(&ctx, "IPv4 IP {} is in blocked list, dropping", src_ip);
+        info!(&ctx, "IPv4 IP {} is in blocked list, dropping", src_ip);
         return Ok(XDP_DROP);
     }
 
     // Check if port is allowed to accept everything
     if blocked_ip_v4_config(src_ip, dest_port, protocol as u8) {
-        debug!(
+        info!(
             &ctx,
             "IPv4 IP {} blocked for port {} protocol {}, dropping",
             src_ip,
@@ -72,19 +72,19 @@ fn check_ipv4_packet(ctx: &XdpContext, src_ip: u32) -> Result<u32, ()> {
 
     // if port is allowed to accept everything
     if allowed_port(dest_port as u32) {
-        debug!(&ctx, "Port {} is globally allowed, passing", dest_port);
+        info!(&ctx, "Port {} is globally allowed, passing", dest_port);
         return Ok(XDP_PASS);
     }
 
     //  Check if IP is in the allowed list
     if allowed_v4_ip(src_ip) {
-        debug!(&ctx, "IPv4 IP {} is globally allowed, passing", src_ip);
+        info!(&ctx, "IPv4 IP {} is globally allowed, passing", src_ip);
         return Ok(XDP_PASS);
     }
 
     //  Check if IP is in ALLOWED_IP_CONFIG and match other configs
     if allowed_ip_v4_config(src_ip, dest_port, protocol as u8) {
-        debug!(
+        info!(
             &ctx,
             "IPv4 IP {} allowed for port {} protocol {}, passing",
             src_ip,
@@ -140,30 +140,30 @@ fn check_ipv6_packet(ctx: &XdpContext, src_ip: [u8; 16]) -> Result<u32, ()> {
 
     // Check if IP is blocked
     if blocked_ip_v6(src_ip_key) {
-        debug!(&ctx, "IPv6 IP is in blocked list, dropping");
+        info!(&ctx, "IPv6 IP is in blocked list, dropping");
         return Ok(XDP_DROP);
     }
 
     if blocked_ip_v6_config(src_ip_key, dest_port, next_header as u8) {
-        debug!(&ctx, "IPv6 IP blocked for port and protocol, dropping");
+        info!(&ctx, "IPv6 IP blocked for port and protocol, dropping");
         return Ok(XDP_DROP);
     }
 
     //  Check if port is allowed to accept everything
     if allowed_port(dest_port as u32) {
-        debug!(&ctx, "Port {} is globally allowed, passing", dest_port);
+        info!(&ctx, "Port {} is globally allowed, passing", dest_port);
         return Ok(XDP_PASS);
     }
 
     //Check if IP is in the allowed list
     if allowed_ip_v6(src_ip_key) {
-        debug!(&ctx, "IPv6 IP is globally allowed, passing");
+        info!(&ctx, "IPv6 IP is globally allowed, passing");
         return Ok(XDP_PASS);
     }
 
     // Check if IP is in ALLOWED_IP_CONFIG and match other configs
     if allowed_ip_v6_config(src_ip_key, dest_port, next_header as u8) {
-        debug!(&ctx, "IPv6 IP allowed for port and protocol, passing");
+        info!(&ctx, "IPv6 IP allowed for port and protocol, passing");
         return Ok(XDP_PASS);
     }
 
