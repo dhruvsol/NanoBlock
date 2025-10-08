@@ -19,7 +19,7 @@ use network_types::{
 
 fn check_ipv4_packet(ctx: &XdpContext, src_ip: u32) -> Result<u32, ()> {
     debug!(&ctx, "Processing IPv4 packet from IP: {}", src_ip);
-    
+
     // Parse IPv4 header
     let iphdr: *const Ipv4Hdr = ptr_at(ctx, EthHdr::LEN)?;
     let iphdr = unsafe { *iphdr };
@@ -28,7 +28,10 @@ fn check_ipv4_packet(ctx: &XdpContext, src_ip: u32) -> Result<u32, ()> {
     let ip_header_len = (iphdr.ihl() as usize * 4) as usize;
     let transport_offset = EthHdr::LEN + ip_header_len;
 
-    debug!(&ctx, "IPv4 protocol: {}, header_len: {}", protocol as u8, ip_header_len);
+    debug!(
+        &ctx,
+        "IPv4 protocol: {}, header_len: {}", protocol as u8, ip_header_len
+    );
 
     // Extract destination port from transport layer
     let dest_port = if protocol as u8 == 6 || protocol as u8 == 17 {
@@ -42,7 +45,10 @@ fn check_ipv4_packet(ctx: &XdpContext, src_ip: u32) -> Result<u32, ()> {
             return Ok(XDP_PASS); // If we can't read port, let it pass
         }
     } else {
-        debug!(&ctx, "Non-TCP/UDP protocol: {}, passing packet", protocol as u8);
+        debug!(
+            &ctx,
+            "Non-TCP/UDP protocol: {}, passing packet", protocol as u8
+        );
         return Ok(XDP_PASS); // Non-TCP/UDP, let it pass
     };
 
@@ -51,13 +57,19 @@ fn check_ipv4_packet(ctx: &XdpContext, src_ip: u32) -> Result<u32, ()> {
         debug!(&ctx, "IPv4 IP {} is in blocked list, dropping", src_ip);
         return Ok(XDP_DROP);
     }
-    
+
     // Check if port is allowed to accept everything
     if blocked_ip_v4_config(src_ip, dest_port, protocol as u8) {
-        debug!(&ctx, "IPv4 IP {} blocked for port {} protocol {}, dropping", src_ip, dest_port, protocol as u8);
+        debug!(
+            &ctx,
+            "IPv4 IP {} blocked for port {} protocol {}, dropping",
+            src_ip,
+            dest_port,
+            protocol as u8
+        );
         return Ok(XDP_DROP);
     }
-    
+
     // if port is allowed to accept everything
     if allowed_port(dest_port as u32) {
         debug!(&ctx, "Port {} is globally allowed, passing", dest_port);
@@ -72,17 +84,29 @@ fn check_ipv4_packet(ctx: &XdpContext, src_ip: u32) -> Result<u32, ()> {
 
     //  Check if IP is in ALLOWED_IP_CONFIG and match other configs
     if allowed_ip_v4_config(src_ip, dest_port, protocol as u8) {
-        debug!(&ctx, "IPv4 IP {} allowed for port {} protocol {}, passing", src_ip, dest_port, protocol as u8);
+        debug!(
+            &ctx,
+            "IPv4 IP {} allowed for port {} protocol {}, passing",
+            src_ip,
+            dest_port,
+            protocol as u8
+        );
         return Ok(XDP_PASS);
     }
 
-    debug!(&ctx, "IPv4 packet from {} to port {} protocol {} not explicitly allowed, dropping", src_ip, dest_port, protocol as u8);
+    debug!(
+        &ctx,
+        "IPv4 packet from {} to port {} protocol {} not explicitly allowed, dropping",
+        src_ip,
+        dest_port,
+        protocol as u8
+    );
     Ok(XDP_DROP)
 }
 
 fn check_ipv6_packet(ctx: &XdpContext, src_ip: [u8; 16]) -> Result<u32, ()> {
     debug!(&ctx, "Processing IPv6 packet");
-    
+
     // Parse IPv6 header
     let ipv6hdr: *const Ipv6Hdr = ptr_at(ctx, EthHdr::LEN)?;
     let ipv6hdr = unsafe { &*ipv6hdr };
@@ -104,7 +128,10 @@ fn check_ipv6_packet(ctx: &XdpContext, src_ip: [u8; 16]) -> Result<u32, ()> {
             return Ok(XDP_PASS); // If we can't read port, let it pass
         }
     } else {
-        debug!(&ctx, "Non-TCP/UDP protocol: {}, passing packet", next_header as u8);
+        debug!(
+            &ctx,
+            "Non-TCP/UDP protocol: {}, passing packet", next_header as u8
+        );
         return Ok(XDP_PASS); // Non-TCP/UDP, let it pass
     };
 
@@ -121,7 +148,7 @@ fn check_ipv6_packet(ctx: &XdpContext, src_ip: [u8; 16]) -> Result<u32, ()> {
         debug!(&ctx, "IPv6 IP blocked for port and protocol, dropping");
         return Ok(XDP_DROP);
     }
-    
+
     //  Check if port is allowed to accept everything
     if allowed_port(dest_port as u32) {
         debug!(&ctx, "Port {} is globally allowed, passing", dest_port);
@@ -144,7 +171,7 @@ fn check_ipv6_packet(ctx: &XdpContext, src_ip: [u8; 16]) -> Result<u32, ()> {
     Ok(XDP_DROP)
 }
 
-pub fn check_packet(ctx: XdpContext) -> Result<u32, ()> {
+pub fn check_packet(ctx: &XdpContext) -> Result<u32, ()> {
     let start = ctx.data();
     let end = ctx.data_end();
 
@@ -186,7 +213,10 @@ pub fn check_packet(ctx: XdpContext) -> Result<u32, ()> {
         }
         _ => {
             // Not an IP packet (could be ARP, VLAN, etc.)
-            debug!(&ctx, "Non-IP packet (EtherType: {}), passing", ethhdr.ether_type);
+            debug!(
+                &ctx,
+                "Non-IP packet (EtherType: {}), passing", ethhdr.ether_type
+            );
             return Ok(XDP_PASS);
         }
     }
