@@ -1,6 +1,31 @@
 # NanoBlock
 
+<div align="center">
+  <img src="https://imagedelivery.net/rWTckr21FEHs39XCNFz7Yw/2285cc98-fe82-48b3-e120-d92cf0759500/public" alt="NanoBlock" width="300" />
+  
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+</div>
+
 A lightweight, high-performance firewall library for Rust that uses XDP (eXpress Data Path) to provide fast and efficient network traffic filtering at the kernel level.
+
+## 📋 Table of Contents
+
+- [⚠️ Safety Warning](#important-safety-warning)
+- [✨ Features](#-features)
+- [🏗️ Architecture](#-architecture)
+- [🚀 Quick Start](#-quick-start)
+- [📖 Example Implementation](#-example-implementation)
+- [🔧 Rule Types](#-rule-types)
+- [🗺️ eBPF Maps](#-ebpf-maps)
+- [🛡️ Safety Features](#-safety-features)
+- [🔨 Building](#-building)
+- [📦 Installation](#-installation)
+- [🧪 Testing](#-testing)
+- [📚 API Reference](#-api-reference)
+- [🔧 Troubleshooting](#-troubleshooting)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
+- [🔗 Related Projects](#-related-projects)
 
 ## ⚠️ **IMPORTANT SAFETY WARNING** ⚠️
 
@@ -16,7 +41,7 @@ This firewall library blocks all traffic by default. **BE EXTREMELY CAREFUL** wh
 
 **If you get locked out, you may need physical/console access to recover!**
 
-## Features
+## ✨ Features
 
 - **High Performance**: Uses XDP for kernel-level packet filtering
 - **Low Latency**: Packet processing before kernel network stack
@@ -26,7 +51,7 @@ This firewall library blocks all traffic by default. **BE EXTREMELY CAREFUL** wh
 - **Memory Efficient**: Optimized eBPF bytecode
 - **Async Support**: User-space API with async/await
 
-## Architecture
+## 🏗️ Architecture
 
 NanoBlock consists of two main components:
 
@@ -42,7 +67,7 @@ NanoBlock consists of two main components:
 - Async API for configuration
 - Type-safe interfaces
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
 
@@ -107,11 +132,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-## Example Implementation
+## 📖 Example Implementation
 
 For a complete, production-ready firewall implementation, see the [NanoBlock Example Repository](https://github.com/dhruvsol/NanoBlock-example).
 
-## Rule Types
+## 🔧 Rule Types
 
 ### 1. Port-Based Rules
 
@@ -151,7 +176,7 @@ firewall.block_ip_port_protocol(
 ).await?;
 ```
 
-## eBPF Maps
+## 🗺️ eBPF Maps
 
 The library uses the following eBPF maps:
 
@@ -165,7 +190,7 @@ The library uses the following eBPF maps:
 - **`BLOCKED_IP_V4_CONFIG`**: IPv4 IP + Port + Protocol blocklist
 - **`BLOCKED_IP_V6_CONFIG`**: IPv6 IP + Port + Protocol blocklist
 
-## Safety Features
+## 🛡️ Safety Features
 
 ### SSH Protection
 
@@ -184,7 +209,7 @@ The library operates on a **deny-by-default** policy:
 - No implicit permissions
 - Clear rule hierarchy
 
-## Building
+## 🔨 Building
 
 ```bash
 # Build the library
@@ -194,7 +219,16 @@ cargo build --release
 cargo build --examples --release
 ```
 
-## Cross-Compilation
+## 📦 Installation
+
+Add NanoBlock to your `Cargo.toml`:
+
+```toml
+[dependencies]
+nano-block = {git="https://github.com/dhruvsol/NanoBlock"}
+```
+
+### Cross-Compilation
 
 For cross-compilation to different architectures:
 
@@ -207,7 +241,7 @@ CC=${ARCH}-linux-musl-gcc cargo build --release \
   --target=${ARCH}-unknown-linux-musl
 ```
 
-## Testing
+## 🧪 Testing
 
 **⚠️ ALWAYS TEST IN A SAFE ENVIRONMENT FIRST ⚠️**
 
@@ -221,7 +255,7 @@ cargo build --release
 sudo ./target/release/firewall --iface lo  # Start with loopback
 ```
 
-## API Reference
+## 📚 API Reference
 
 ### FirewallManager
 
@@ -292,7 +326,7 @@ pub enum FirewallError {
 }
 ```
 
-## Troubleshooting
+## 🔧 Troubleshooting
 
 ### Common Issues
 
@@ -310,7 +344,7 @@ If you get locked out:
 3. **Disable Interface**: `sudo ip link set dev eth0 down`
 4. **Reboot**: Last resort if other methods fail
 
-## Contributing
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -318,13 +352,11 @@ If you get locked out:
 4. Ensure all tests pass
 5. Submit a pull request
 
-## License
+## 📄 License
 
-This project is licensed under:
+This project is licensed under the MIT License - see the [LICENSE-MIT](LICENSE-MIT) file for details.
 
-See [LICENSE-MIT](LICENSE-MIT)for details.
-
-## Related Projects
+## 🔗 Related Projects
 
 - [NanoBlock Example](https://github.com/dhruvsol/NanoBlock-example) - Complete firewall implementation
 - [Aya](https://github.com/aya-rs/aya) - eBPF library for Rust
